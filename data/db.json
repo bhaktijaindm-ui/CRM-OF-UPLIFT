@@ -1,0 +1,390 @@
+{
+  "users": [
+    {
+      "id": "u_bhakti",
+      "email": "bhaktijaindm@gmail.com",
+      "name": "Bhakti Jain",
+      "role": "admin",
+      "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
+      "createdAt": "2026-05-22T22:30:00.000Z"
+    },
+    {
+      "id": "u1",
+      "email": "sarah@example.com",
+      "name": "Sarah Jenkins",
+      "role": "admin",
+      "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
+      "createdAt": "2026-04-22T16:53:37.984Z"
+    },
+    {
+      "id": "u2",
+      "email": "david@example.com",
+      "name": "David Miller",
+      "role": "manager",
+      "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+      "createdAt": "2026-04-27T16:53:37.984Z"
+    },
+    {
+      "id": "u3",
+      "email": "alex@example.com",
+      "name": "Alex Rivera",
+      "role": "sales",
+      "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
+      "createdAt": "2026-05-02T16:53:37.984Z"
+    }
+  ],
+  "contacts": [
+    {
+      "id": "co1",
+      "name": "John Doe",
+      "email": "john.doe@techcorp.com",
+      "phone": "+1 (555) 382-9901",
+      "role": "VP of Engineering",
+      "companyId": "c1",
+      "status": "Qualified",
+      "ownerId": "u3",
+      "createdAt": "2026-05-07T16:53:37.985Z",
+      "updatedAt": "2026-05-12T16:53:37.985Z"
+    },
+    {
+      "id": "co2",
+      "name": "Jane Smith",
+      "email": "jane@growthflow.io",
+      "phone": "+1 (555) 872-4822",
+      "role": "Director of Marketing",
+      "companyId": "c2",
+      "status": "Contacted",
+      "ownerId": "u3",
+      "createdAt": "2026-05-10T16:53:37.985Z",
+      "updatedAt": "2026-05-10T16:53:37.985Z"
+    },
+    {
+      "id": "co3",
+      "name": "Robert Chen",
+      "email": "r.chen@apexretail.com",
+      "phone": "+1 (555) 293-8472",
+      "role": "Lead Purchasing Manager",
+      "companyId": "c3",
+      "status": "Lead",
+      "ownerId": "u2",
+      "createdAt": "2026-04-30T16:53:37.985Z",
+      "updatedAt": "2026-04-30T16:53:37.985Z"
+    },
+    {
+      "id": "co4",
+      "name": "Emily Watson",
+      "email": "emily.watson@bluesky.aero",
+      "phone": "+1 (555) 762-9844",
+      "role": "Chief Operations Officer",
+      "companyId": "c4",
+      "status": "Qualified",
+      "ownerId": "u1",
+      "createdAt": "2026-04-12T16:53:37.986Z",
+      "updatedAt": "2026-04-17T16:53:37.986Z"
+    },
+    {
+      "id": "co5",
+      "name": "Mark Taylor",
+      "email": "mtaylor@techcorp.com",
+      "phone": "+1 (555) 382-9904",
+      "role": "IT Procurement Manager",
+      "companyId": "c1",
+      "status": "Contacted",
+      "ownerId": "u3",
+      "createdAt": "2026-05-08T16:53:37.986Z",
+      "updatedAt": "2026-05-08T16:53:37.986Z"
+    },
+    {
+      "id": "co_9vh4peg29",
+      "name": "John Miller",
+      "email": "john.miller@stripe.com",
+      "phone": "",
+      "role": "VP of Engineering",
+      "companyId": "c4",
+      "status": "Qualified",
+      "ownerId": "u1",
+      "createdAt": "2026-05-22T16:56:45.233Z",
+      "updatedAt": "2026-05-22T16:56:45.233Z"
+    }
+  ],
+  "companies": [
+    {
+      "id": "c1",
+      "name": "TechCorp Solutions",
+      "domain": "techcorp.com",
+      "industry": "Software & Technology",
+      "size": "51-200",
+      "phone": "+1 (555) 019-2834",
+      "address": "1600 Amphitheatre Pkwy, Mountain View, CA 94043",
+      "ownerId": "u3",
+      "createdAt": "2026-05-07T16:53:37.985Z",
+      "updatedAt": "2026-05-07T16:53:37.985Z"
+    },
+    {
+      "id": "c2",
+      "name": "GrowthFlow Marketing",
+      "domain": "growthflow.io",
+      "industry": "Marketing & Advertising",
+      "size": "11-50",
+      "phone": "+1 (555) 028-3948",
+      "address": "111 Sutter St Suite 400, San Francisco, CA 94104",
+      "ownerId": "u3",
+      "createdAt": "2026-05-10T16:53:37.985Z",
+      "updatedAt": "2026-05-12T16:53:37.985Z"
+    },
+    {
+      "id": "c3",
+      "name": "Apex Retail Group",
+      "domain": "apexretail.com",
+      "industry": "Retail & E-commerce",
+      "size": "201+",
+      "phone": "+1 (555) 047-1928",
+      "address": "350 Fifth Ave, New York, NY 10118",
+      "ownerId": "u2",
+      "createdAt": "2026-04-30T16:53:37.985Z",
+      "updatedAt": "2026-05-02T16:53:37.985Z"
+    },
+    {
+      "id": "c4",
+      "name": "BlueSky Aviation",
+      "domain": "bluesky.aero",
+      "industry": "Aerospace & Transport",
+      "size": "51-200",
+      "phone": "+1 (555) 098-2371",
+      "address": "777 Boeing Blvd, Seattle, WA 98124",
+      "ownerId": "u1",
+      "createdAt": "2026-04-12T16:53:37.985Z",
+      "updatedAt": "2026-05-17T16:53:37.985Z"
+    }
+  ],
+  "deals": [
+    {
+      "id": "d1",
+      "name": "TechCorp Enterprise CRM Rollout",
+      "amount": 45000,
+      "stage": "Negotiation",
+      "companyId": "c1",
+      "contactId": "co1",
+      "ownerId": "u3",
+      "expectedCloseDate": "2026-06-06",
+      "createdAt": "2026-05-07T16:53:37.987Z",
+      "updatedAt": "2026-05-20T16:53:37.987Z"
+    },
+    {
+      "id": "d2",
+      "name": "GrowthFlow Marketing Automation Suite",
+      "amount": 12000,
+      "stage": "Contacted",
+      "companyId": "c2",
+      "contactId": "co2",
+      "ownerId": "u3",
+      "expectedCloseDate": "2026-06-21",
+      "createdAt": "2026-05-12T16:53:37.987Z",
+      "updatedAt": "2026-05-12T16:53:37.987Z"
+    },
+    {
+      "id": "d3",
+      "name": "Apex Point of Sale Integration",
+      "amount": 85000,
+      "stage": "Proposal",
+      "companyId": "c3",
+      "contactId": "co3",
+      "ownerId": "u2",
+      "expectedCloseDate": "2026-06-11",
+      "createdAt": "2026-05-02T16:53:37.987Z",
+      "updatedAt": "2026-05-17T16:53:37.987Z"
+    },
+    {
+      "id": "d4",
+      "name": "BlueSky Logistics Platform License",
+      "amount": 120000,
+      "stage": "Won",
+      "companyId": "c4",
+      "contactId": "co4",
+      "ownerId": "u1",
+      "expectedCloseDate": "2026-05-19",
+      "createdAt": "2026-04-17T16:53:37.987Z",
+      "updatedAt": "2026-05-19T16:53:37.987Z"
+    },
+    {
+      "id": "d5",
+      "name": "TechCorp Cloud Storage pilot",
+      "amount": 8000,
+      "stage": "Contacted",
+      "companyId": "c1",
+      "contactId": "co5",
+      "ownerId": "u3",
+      "expectedCloseDate": "2026-07-06",
+      "createdAt": "2026-05-21T16:53:37.987Z",
+      "updatedAt": "2026-05-22T16:57:23.457Z"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "t1",
+      "title": "Call John Doe to discuss contract edits",
+      "description": "Sarah requests we review section 4 on SLA and data privacy before John signs.",
+      "dueDate": "2026-05-23",
+      "status": "Completed",
+      "priority": "High",
+      "assignedTo": "u3",
+      "linkedType": "deal",
+      "linkedId": "d1",
+      "createdAt": "2026-05-20T16:53:37.987Z"
+    },
+    {
+      "id": "t2",
+      "title": "Prepare Apex POS demo environment",
+      "description": "Ensure multi-store synchronization demo works correctly. Highlight speed improvements.",
+      "dueDate": "2026-05-24",
+      "status": "Completed",
+      "priority": "High",
+      "assignedTo": "u2",
+      "linkedType": "deal",
+      "linkedId": "d3",
+      "createdAt": "2026-05-17T16:53:37.987Z"
+    },
+    {
+      "id": "t3",
+      "title": "Send brochure to Jane Smith",
+      "description": "Jane asked for our marketing agency automation case studies.",
+      "dueDate": "2026-05-21",
+      "status": "Completed",
+      "priority": "Low",
+      "assignedTo": "u3",
+      "linkedType": "contact",
+      "linkedId": "co2",
+      "createdAt": "2026-05-19T16:53:37.987Z"
+    },
+    {
+      "id": "t4",
+      "title": "Follow up with Robert Chen",
+      "description": "Has Robert reviewed the proposal pitch? Give him a call.",
+      "dueDate": "2026-05-26",
+      "status": "Pending",
+      "priority": "Medium",
+      "assignedTo": "u2",
+      "linkedType": "contact",
+      "linkedId": "co3",
+      "createdAt": "2026-05-12T16:53:37.987Z"
+    }
+  ],
+  "notes": [
+    {
+      "id": "n1",
+      "content": "John was extremely interested in our security features. Emphasized that HIPAA compliance and SOC2 Type II reports are absolute prerequisites. I emailed him our security package.",
+      "linkedType": "contact",
+      "linkedId": "co1",
+      "createdBy": "u3",
+      "createdAt": "2026-05-08T16:53:37.987Z"
+    },
+    {
+      "id": "n2",
+      "content": "Had a Zoom call. They are comparing us with two competitors. Our advantage is the deep Salesforce migration tools. They want a draft contract for 150 seats by end of week.",
+      "linkedType": "deal",
+      "linkedId": "d1",
+      "createdBy": "u3",
+      "createdAt": "2026-05-19T16:53:37.987Z"
+    },
+    {
+      "id": "n3",
+      "content": "Sent initial pricing tables. Jane says their budget for this quarter is tight, might need to start with a Pilot of 10 users first, then scale up next fiscal year.",
+      "linkedType": "contact",
+      "linkedId": "co2",
+      "createdBy": "u3",
+      "createdAt": "2026-05-11T16:53:37.988Z"
+    }
+  ],
+  "activities": [
+    {
+      "id": "a1",
+      "type": "Call",
+      "title": "Initial Discovery Call",
+      "description": "Spoke with John about their current challenges migrating off legacy spreadsheets.",
+      "linkedType": "contact",
+      "linkedId": "co1",
+      "createdBy": "u3",
+      "createdAt": "2026-05-07T16:53:37.988Z"
+    },
+    {
+      "type": "Email",
+      "id": "a2",
+      "title": "Sent Proposal & Case Studies",
+      "description": "Emailed custom proposal for CRM integration to Jane. Attached Apex case study.",
+      "linkedType": "contact",
+      "linkedId": "co2",
+      "createdBy": "u3",
+      "createdAt": "2026-05-10T16:53:37.988Z"
+    },
+    {
+      "type": "Meeting",
+      "id": "a3",
+      "title": "Executive Demo with BlueSky team",
+      "description": "Presented logistics optimization dashboard to Emily Watson and VP of Procurement.",
+      "linkedType": "contact",
+      "linkedId": "co4",
+      "createdBy": "u1",
+      "createdAt": "2026-04-16T16:53:37.988Z"
+    },
+    {
+      "type": "System",
+      "id": "a4",
+      "title": "Deal Won",
+      "description": "Deal \"BlueSky Logistics Platform License\" marked as Won. License deployed.",
+      "linkedType": "deal",
+      "linkedId": "d4",
+      "createdBy": "u1",
+      "createdAt": "2026-05-19T16:53:37.988Z"
+    },
+    {
+      "type": "Call",
+      "id": "a5",
+      "title": "Negotiation Follow-up",
+      "description": "Reviewed SLAs and negotiated 10% volume discount. Drafted SLA update.",
+      "linkedType": "deal",
+      "linkedId": "d1",
+      "createdBy": "u3",
+      "createdAt": "2026-05-20T16:53:37.988Z"
+    },
+    {
+      "id": "a_11e0afb1n",
+      "type": "System",
+      "title": "Contact Created",
+      "description": "Contact John Miller was added by Sarah Jenkins.",
+      "linkedType": "contact",
+      "linkedId": "co_9vh4peg29",
+      "createdBy": "u1",
+      "createdAt": "2026-05-22T16:56:45.233Z"
+    },
+    {
+      "id": "a_18b5y2mtm",
+      "type": "Call",
+      "title": "Deal Stage Updated",
+      "description": "Deal \"TechCorp Cloud Storage pilot\" moved to stage \"Contacted\" by Sarah Jenkins.",
+      "linkedType": "deal",
+      "linkedId": "d5",
+      "createdBy": "u1",
+      "createdAt": "2026-05-22T16:57:23.457Z"
+    },
+    {
+      "id": "a_xmzrrdbpa",
+      "type": "System",
+      "title": "Task Completed Checkmark",
+      "description": "Task \"Call John Doe to discuss contract edits\" was marked completed by Sarah Jenkins.",
+      "linkedType": "deal",
+      "linkedId": "d1",
+      "createdBy": "u1",
+      "createdAt": "2026-05-22T16:57:48.756Z"
+    },
+    {
+      "id": "a_hpushg5kg",
+      "type": "System",
+      "title": "Task Completed Checkmark",
+      "description": "Task \"Prepare Apex POS demo environment\" was marked completed by Sarah Jenkins.",
+      "linkedType": "deal",
+      "linkedId": "d3",
+      "createdBy": "u1",
+      "createdAt": "2026-05-22T16:57:52.387Z"
+    }
+  ]
+}
