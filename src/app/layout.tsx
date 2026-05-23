@@ -3,7 +3,7 @@ import { CRMProvider } from '../components/SharedStateContext';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'TalosOS - Enterprise Hub',
+  title: 'Uplift - Enterprise Hub',
   description: 'Automated CRM Workspace',
 };
 
@@ -17,10 +17,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <aside className="w-64 bg-slate-900 text-slate-200 flex flex-col border-r border-slate-800 shrink-0">
               <div className="p-6 border-b border-slate-800 flex items-center gap-3">
                 <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white shadow-md shadow-blue-500/20">
-                  T
+                  U
                 </div>
                 <div>
-                  <h1 className="font-bold tracking-tight text-white leading-none">TalosOS</h1>
+                  <h1 className="font-bold tracking-tight text-white leading-none">Uplift</h1>
                   <span className="text-[10px] text-slate-400 font-medium tracking-widest uppercase">Enterprise</span>
                 </div>
               </div>
