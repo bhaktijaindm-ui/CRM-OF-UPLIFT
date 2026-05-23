@@ -356,7 +356,7 @@ export default function ContentPipelineTable() {
             🔑
           </div>
           <div>
-            <h2 className="text-base font-bold tracking-tight">Content Pipeline Access Console</h2>
+            <h2 className="text-base font-bold tracking-tight">Social Media Content Access Console</h2>
             <p className="text-xs text-slate-400">All roles edit cells. Only Admins can create rows, add columns, and load assets.</p>
           </div>
         </div>
@@ -376,7 +376,7 @@ export default function ContentPipelineTable() {
       {/* Header Info */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900">Direct Content Pipeline</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900">Social Media Content Grid</h2>
           <p className="text-sm text-slate-500">Edit table values directly. Double-click or select options to modify campaign assets.</p>
         </div>
         <div className="flex items-center gap-2">
@@ -398,7 +398,7 @@ export default function ContentPipelineTable() {
       <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 shadow-sm">
         <form onSubmit={handleAddColumn} className="flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="space-y-0.5 text-center sm:text-left">
-            <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider">Pipeline Column Builder</h4>
+            <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider">Social Media Column Builder</h4>
             <p className="text-xs text-slate-400">
               {isAdmin 
                 ? 'Append custom criteria columns to track extra details on the fly.'
@@ -446,7 +446,7 @@ export default function ContentPipelineTable() {
                 <th className="p-3 w-[130px]">Post Date</th>
                 <th className="p-3 w-[220px]">Asset Attachments</th>
                 <th className="p-3 w-[200px]">Approval Item</th>
-                <th className="p-3 w-[160px]">Pipeline Status</th>
+                <th className="p-3 w-[160px]">Social Media Status</th>
                 {/* Custom Columns Headers */}
                 {customColumns.map((col) => (
                   <th key={col} className="p-3 w-[160px] bg-blue-50/50 text-blue-800 font-bold border-l border-blue-100">

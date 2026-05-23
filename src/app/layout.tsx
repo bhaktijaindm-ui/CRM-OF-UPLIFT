@@ -36,7 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </Link>
                 <Link href="/content" className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-slate-800 hover:text-white transition-all group">
                   <span className="h-2 w-2 rounded-full bg-sky-400 group-hover:scale-125 transition-transform" />
-                  Content Pipeline
+                  Social Media Content
                 </Link>
                 <Link href="/calendar" className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-slate-800 hover:text-white transition-all group">
                   <span className="h-2 w-2 rounded-full bg-amber-500 group-hover:scale-125 transition-transform" />
