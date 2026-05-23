@@ -3,6 +3,20 @@
 import React, { useState } from 'react';
 import { useCRM } from '../../components/SharedStateContext';
 
+interface AttachmentItem {
+  id: string;
+  name: string;
+  type: 'Link' | 'Document' | 'Image' | 'Video' | 'Text';
+  url: string;
+}
+
+interface ApprovalAssetItem {
+  type: 'Video' | 'Graphic' | 'PDF';
+  title: string;
+  url: string;
+  pdfPages?: string[]; // Array of strings simulating document pages
+}
+
 interface ContentItemExtended {
   id: string;
   clientName: string;
@@ -10,8 +24,9 @@ interface ContentItemExtended {
   details: string;
   caption: string;
   postDate: string; // YYYY-MM-DD
-  referenceUrl: string;
   status: 'Not Started' | 'In Progress' | 'Pending Approval' | 'Scheduled' | 'Posted' | 'Completed';
+  attachments: AttachmentItem[];
+  approvalAsset: ApprovalAssetItem | null;
   dynamicValues: Record<string, string>; // Stores custom column values
 }
 
@@ -22,7 +37,7 @@ export default function ContentPipelineTable() {
   const [currentUserEmail, setCurrentUserEmail] = useState<string>('bhaktijaindm@gmail.com');
   const isAdmin = currentUserEmail === 'bhaktijaindm@gmail.com';
 
-  // 2. Local State for Content Items (supports direct cell editing and new rows)
+  // 2. Content items list state with media objects pre-seeded
   const [contentList, setContentList] = useState<ContentItemExtended[]>([
     {
       id: 'item-1',
@@ -31,8 +46,16 @@ export default function ContentPipelineTable() {
       details: 'Q2 Performance Breakdown Video',
       caption: 'Scaling SEO architectures in 2026. Here is the blueprint.',
       postDate: '2026-05-25',
-      referenceUrl: 'https://vimeo.com/ref/992',
       status: 'In Progress',
+      attachments: [
+        { id: 'att-1', name: 'SEO Script Draft v2', type: 'Document', url: 'https://docs.google.com/document/d/ref-1' },
+        { id: 'att-2', name: 'Thumbnail Wireframe', type: 'Image', url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80' }
+      ],
+      approvalAsset: {
+        type: 'Video',
+        title: 'Q2 SEO Breakdown Final.mp4',
+        url: 'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4'
+      },
       dynamicValues: {}
     },
     {
@@ -42,8 +65,16 @@ export default function ContentPipelineTable() {
       details: 'SaaS UX High-Contrast System Graphics',
       caption: 'Why dark layouts retain 40% more engineering focus.',
       postDate: '2026-05-26',
-      referenceUrl: 'https://behance.net/ref/801',
       status: 'Pending Approval',
+      attachments: [
+        { id: 'att-3', name: 'UX Audit Notes', type: 'Text', url: 'Focus groups prefer deep slate (#0f172a) over black (#000000) by 40%.' },
+        { id: 'att-4', name: 'Figma Assets Node', type: 'Link', url: 'https://figma.com/design/assets-801' }
+      ],
+      approvalAsset: {
+        type: 'Graphic',
+        title: 'SaaS Dark Mode UI Cover.png',
+        url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80'
+      },
       dynamicValues: {}
     },
     {
@@ -53,8 +84,20 @@ export default function ContentPipelineTable() {
       details: 'AI Optimization Trends Deck',
       caption: 'Moving beyond legacy anchors into contextual answer generation.',
       postDate: '2026-05-28',
-      referenceUrl: 'https://figma.com/ref/404',
       status: 'Scheduled',
+      attachments: [
+        { id: 'att-5', name: 'AI Research Deck Link', type: 'Link', url: 'https://slides.google.com/deck-902' }
+      ],
+      approvalAsset: {
+        type: 'PDF',
+        title: 'AI Answer Generation Guide.pdf',
+        url: 'MOCK_PDF_RESOURCES',
+        pdfPages: [
+          'PAGE 1: CONTEXTUAL ANSWER GENERATION\n\nTraditional search indexes are moving to LLM-guided context maps. Website tags must adapt to semantic crawling agents.',
+          'PAGE 2: OPTIMIZATION KEYMETRICS\n\n- Organic Click share: +15%\n- Semantic match rank: #2 average\n- Average Answer citation length: 45 words',
+          'PAGE 3: CONTEXT STRUCTURE\n\nStructure all markup in JSON-LD. Priority items:\n1. MainEntityOfPage\n2. Author Trustworthiness rating\n3. Publisher verification tokens'
+        ]
+      },
       dynamicValues: {}
     }
   ]);
@@ -63,7 +106,22 @@ export default function ContentPipelineTable() {
   const [customColumns, setCustomColumns] = useState<string[]>([]);
   const [newColName, setNewColName] = useState('');
 
-  // Toast Notification State
+  // 4. Inline popover adder controllers
+  const [addingAttachmentId, setAddingAttachmentId] = useState<string | null>(null);
+  const [newAttName, setNewAttName] = useState('');
+  const [newAttType, setNewAttType] = useState<AttachmentItem['type']>('Link');
+  const [newAttUrl, setNewAttUrl] = useState('');
+
+  const [addingApprovalId, setAddingApprovalId] = useState<string | null>(null);
+  const [newAppType, setNewAppType] = useState<ApprovalAssetItem['type']>('Graphic');
+  const [newAppTitle, setNewAppTitle] = useState('');
+  const [selectedMockPreset, setSelectedMockPreset] = useState<string>('nature-video');
+
+  // 5. Lightbox Preview Modal State
+  const [previewingAsset, setPreviewingAsset] = useState<{ item: ContentItemExtended; asset: ApprovalAssetItem } | null>(null);
+  const [pdfPageIdx, setPdfPageIdx] = useState(0);
+
+  // Toast Notification state
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const triggerToast = (msg: string) => {
@@ -124,8 +182,9 @@ export default function ContentPipelineTable() {
       details: 'Enter content brief details...',
       caption: 'Enter caption text...',
       postDate: '2026-05-24',
-      referenceUrl: 'https://',
       status: 'Not Started',
+      attachments: [],
+      approvalAsset: null,
       dynamicValues: {}
     };
 
@@ -144,14 +203,14 @@ export default function ContentPipelineTable() {
     triggerToast('Content row deleted.');
   };
 
-  // Update cell field directly in local state
+  // Update cell field directly
   const handleUpdateCell = (id: string, field: keyof ContentItemExtended, value: any) => {
     setContentList(prev =>
       prev.map(item => (item.id === id ? { ...item, [field]: value } : item))
     );
   };
 
-  // Update dynamic custom column value directly
+  // Update dynamic custom column value
   const handleUpdateCustomVal = (id: string, colName: string, value: string) => {
     setContentList(prev =>
       prev.map(item =>
@@ -162,9 +221,127 @@ export default function ContentPipelineTable() {
     );
   };
 
+  // Add Attachment Handler (Admins can do it; Staff blocked)
+  const handleAddAttachment = (id: string) => {
+    if (!isAdmin) {
+      triggerToast('Permission Denied: Only administrators can upload/add attachments.');
+      return;
+    }
+    if (!newAttName.trim() || !newAttUrl.trim()) {
+      triggerToast('Please provide an asset title and resource URL.');
+      return;
+    }
+
+    const newAtt: AttachmentItem = {
+      id: `att-${Date.now()}`,
+      name: newAttName.trim(),
+      type: newAttType,
+      url: newAttUrl.trim()
+    };
+
+    setContentList(prev =>
+      prev.map(item =>
+        item.id === id
+          ? { ...item, attachments: [...item.attachments, newAtt] }
+          : item
+      )
+    );
+
+    // Reset inputs
+    setAddingAttachmentId(null);
+    setNewAttName('');
+    setNewAttUrl('');
+    triggerToast(`Added attachment "${newAtt.name}"`);
+  };
+
+  // Remove Attachment Handler
+  const handleRemoveAttachment = (itemId: string, attId: string) => {
+    if (!isAdmin) {
+      triggerToast('Permission Denied: Only administrators can modify attachments.');
+      return;
+    }
+    setContentList(prev =>
+      prev.map(item =>
+        item.id === itemId
+          ? { ...item, attachments: item.attachments.filter(a => a.id !== attId) }
+          : item
+      )
+    );
+    triggerToast('Attachment removed.');
+  };
+
+  // Add Approval Asset Handler (Admin Only)
+  const handleAddApprovalAsset = (id: string) => {
+    if (!isAdmin) {
+      triggerToast('Permission Denied: Only administrators can specify approval assets.');
+      return;
+    }
+    if (!newAppTitle.trim()) {
+      triggerToast('Please provide a title for the approval item.');
+      return;
+    }
+
+    let url = '';
+    let pages: string[] | undefined = undefined;
+
+    if (newAppType === 'Video') {
+      url = 'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4';
+    } else if (newAppType === 'Graphic') {
+      url = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80';
+    } else if (newAppType === 'PDF') {
+      url = 'MOCK_PDF_FILE';
+      pages = [
+        'PAGE 1: BRAND CAMPAIGN ASSETS OVERVIEW\n\nGraphic layouts focus on deep brand identity integration. Target dispatches scheduled for Q2.',
+        'PAGE 2: PLATFORM DISTRIBUTION\n\n- Meta Ads: 3 Reels + 2 Carousels\n- Google Ads: 1 Search campaign\n- LinkedIn Ads: 2 InMails',
+        'PAGE 3: COMPLIANCE SPECS\n\nAll media assets must adhere to local MP state advertising standards. Final clearance requested.'
+      ];
+    }
+
+    const newApproval: ApprovalAssetItem = {
+      type: newAppType,
+      title: newAppTitle.trim(),
+      url,
+      pdfPages: pages
+    };
+
+    setContentList(prev =>
+      prev.map(item =>
+        item.id === id
+          ? { ...item, approvalAsset: newApproval }
+          : item
+      )
+    );
+
+    setAddingApprovalId(null);
+    setNewAppTitle('');
+    triggerToast(`Registered approval item: ${newApproval.title}`);
+  };
+
+  // Remove Approval Asset Handler
+  const handleRemoveApprovalAsset = (itemId: string) => {
+    if (!isAdmin) {
+      triggerToast('Permission Denied: Only administrators can clear deliverables.');
+      return;
+    }
+    setContentList(prev =>
+      prev.map(item =>
+        item.id === itemId ? { ...item, approvalAsset: null } : item
+      )
+    );
+    triggerToast('Approval asset cleared.');
+  };
+
+  // Direct Modal Approval Workflow Action
+  const handleApproveWorkflow = (status: ContentItemExtended['status']) => {
+    if (!previewingAsset) return;
+    handleUpdateCell(previewingAsset.item.id, 'status', status);
+    setPreviewingAsset(null);
+    triggerToast(`Item workflow status updated to: ${status}`);
+  };
+
   return (
     <div className="space-y-8 relative">
-      {/* Toast Notification banner */}
+      {/* Toast banner */}
       {toastMessage && (
         <div className="fixed top-4 right-4 z-50 px-6 py-4 rounded-xl shadow-xl bg-slate-900 border border-slate-700 text-white font-semibold flex items-center gap-2 animate-slide-in">
           <span>✓</span>
@@ -180,7 +357,7 @@ export default function ContentPipelineTable() {
           </div>
           <div>
             <h2 className="text-base font-bold tracking-tight">Content Pipeline Access Console</h2>
-            <p className="text-xs text-slate-400">All users can edit cells. Only Administrators can add rows or columns.</p>
+            <p className="text-xs text-slate-400">All roles edit cells. Only Admins can create rows, add columns, and load assets.</p>
           </div>
         </div>
         <div className="flex items-center gap-3 bg-slate-800 border border-slate-700 rounded-xl p-2.5">
@@ -203,7 +380,6 @@ export default function ContentPipelineTable() {
           <p className="text-sm text-slate-500">Edit table values directly. Double-click or select options to modify campaign assets.</p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Add Row Button (Disabled/Active based on Admin role) */}
           <button
             onClick={handleAddRow}
             disabled={!isAdmin}
@@ -259,16 +435,17 @@ export default function ContentPipelineTable() {
       {/* Database Sheet Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse table-fixed min-w-[1200px]">
+          <table className="w-full text-left border-collapse table-fixed min-w-[1550px]">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50/70 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                <th className="p-3 pl-6 w-[150px] sticky left-0 bg-slate-50 z-20 border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Task Code</th>
-                <th className="p-3 w-[180px]">Client Name</th>
-                <th className="p-3 w-[150px]">Hosting / Format</th>
-                <th className="p-3 w-[220px]">Content details</th>
-                <th className="p-3 w-[220px]">Caption</th>
-                <th className="p-3 w-[140px]">Post Date</th>
-                <th className="p-3 w-[180px]">Reference Link</th>
+                <th className="p-3 pl-6 w-[140px] sticky left-0 bg-slate-50 z-20 border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Task Code</th>
+                <th className="p-3 w-[160px]">Client Name</th>
+                <th className="p-3 w-[140px]">Hosting / Format</th>
+                <th className="p-3 w-[200px]">Content details</th>
+                <th className="p-3 w-[200px]">Caption</th>
+                <th className="p-3 w-[130px]">Post Date</th>
+                <th className="p-3 w-[220px]">Asset Attachments</th>
+                <th className="p-3 w-[200px]">Approval Item</th>
                 <th className="p-3 w-[160px]">Pipeline Status</th>
                 {/* Custom Columns Headers */}
                 {customColumns.map((col) => (
@@ -304,7 +481,6 @@ export default function ContentPipelineTable() {
                             {c.companyName}
                           </option>
                         ))}
-                        {/* Fallback support in case custom clients exist */}
                         {!clients.some(c => c.companyName === item.clientName) && (
                           <option value={item.clientName}>{item.clientName}</option>
                         )}
@@ -355,17 +531,167 @@ export default function ContentPipelineTable() {
                       />
                     </td>
 
-                    {/* Cell 7: Reference URL */}
-                    <td className="p-2">
-                      <input
-                        type="text"
-                        value={item.referenceUrl}
-                        onChange={(e) => handleUpdateCell(item.id, 'referenceUrl', e.target.value)}
-                        className="w-full border border-slate-200 focus:border-blue-400 rounded px-2.5 py-1.5 text-xs focus:outline-none bg-slate-50/20 focus:bg-white font-mono"
-                      />
+                    {/* Cell 7: Asset Attachments (all-in-one link/doc/image/video/text) */}
+                    <td className="p-2 relative">
+                      <div className="space-y-1.5">
+                        <div className="flex flex-wrap gap-1">
+                          {item.attachments.map((att) => (
+                            <span 
+                              key={att.id} 
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-bold border border-slate-200 shadow-sm"
+                              title={`${att.type}: ${att.url}`}
+                            >
+                              <span>
+                                {att.type === 'Link' ? '🔗' :
+                                 att.type === 'Document' ? '📄' :
+                                 att.type === 'Image' ? '🖼' :
+                                 att.type === 'Video' ? '🎥' : '✍'}
+                              </span>
+                              <span className="max-w-[70px] truncate">{att.name}</span>
+                              {isAdmin && (
+                                <button 
+                                  onClick={() => handleRemoveAttachment(item.id, att.id)}
+                                  className="text-[9px] text-slate-400 hover:text-rose-600 font-bold ml-1"
+                                >
+                                  ✕
+                                </button>
+                              )}
+                            </span>
+                          ))}
+                        </div>
+                        {isAdmin ? (
+                          <button
+                            onClick={() => setAddingAttachmentId(addingAttachmentId === item.id ? null : item.id)}
+                            className="text-[10px] font-extrabold text-blue-600 hover:text-blue-800 flex items-center gap-0.5"
+                          >
+                            + Add Asset
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-slate-400 font-medium italic">🔒 Admin only</span>
+                        )}
+
+                        {/* Inline popover helper to configure attachment */}
+                        {addingAttachmentId === item.id && (
+                          <div className="absolute left-0 bottom-full mb-1 z-30 bg-white border border-slate-200 rounded-xl p-3 shadow-xl w-[220px] space-y-2">
+                            <h5 className="font-bold text-[11px] text-slate-800">Add Attachments Rule</h5>
+                            <input
+                              type="text"
+                              placeholder="Asset Title (e.g. Brief v2)"
+                              value={newAttName}
+                              onChange={(e) => setNewAttName(e.target.value)}
+                              className="w-full border border-slate-200 rounded px-2 py-1 text-[10px] focus:outline-none"
+                            />
+                            <div className="grid grid-cols-2 gap-1.5">
+                              <select
+                                value={newAttType}
+                                onChange={(e) => setNewAttType(e.target.value as any)}
+                                className="w-full border border-slate-200 rounded px-1.5 py-1 text-[10px] bg-white cursor-pointer"
+                              >
+                                <option value="Link">🔗 Link</option>
+                                <option value="Document">📄 Doc</option>
+                                <option value="Image">🖼 Image</option>
+                                <option value="Video">🎥 Video</option>
+                                <option value="Text">✍ Text</option>
+                              </select>
+                              <button
+                                type="button"
+                                onClick={() => handleAddAttachment(item.id)}
+                                className="bg-slate-900 text-white font-bold rounded text-[9px] hover:bg-slate-800"
+                              >
+                                Add
+                              </button>
+                            </div>
+                            <input
+                              type="text"
+                              placeholder="URL Link or Text details"
+                              value={newAttUrl}
+                              onChange={(e) => setNewAttUrl(e.target.value)}
+                              className="w-full border border-slate-200 rounded px-2 py-1 text-[10px] focus:outline-none font-mono"
+                            />
+                          </div>
+                        )}
+                      </div>
                     </td>
 
-                    {/* Cell 8: Status dropdown */}
+                    {/* Cell 8: Approval Item (Graphic/Video/PDF Player review) */}
+                    <td className="p-2 relative">
+                      {item.approvalAsset ? (
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => setPreviewingAsset({ item, asset: item.approvalAsset! })}
+                            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold shadow-sm border transition text-left shrink-0 ${
+                              item.approvalAsset.type === 'Video' ? 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100' :
+                              item.approvalAsset.type === 'Graphic' ? 'bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-100' :
+                              'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
+                            }`}
+                          >
+                            <span>
+                              {item.approvalAsset.type === 'Video' ? '🎥' :
+                               item.approvalAsset.type === 'Graphic' ? '🖼' : '📄'}
+                            </span>
+                            <span className="max-w-[80px] truncate" title={item.approvalAsset.title}>
+                              {item.approvalAsset.title}
+                            </span>
+                          </button>
+                          {isAdmin && (
+                            <button
+                              onClick={() => handleRemoveApprovalAsset(item.id)}
+                              className="text-[11px] text-slate-400 hover:text-rose-600 font-bold px-1"
+                              title="Clear asset"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <div>
+                          {isAdmin ? (
+                            <button
+                              onClick={() => setAddingApprovalId(addingApprovalId === item.id ? null : item.id)}
+                              className="text-[10px] font-extrabold text-indigo-600 hover:text-indigo-800"
+                            >
+                              + Set Approval Item
+                            </button>
+                          ) : (
+                            <span className="text-[10px] text-slate-400 font-medium italic">🔒 Admin only</span>
+                          )}
+
+                          {/* Popover to select mock approval preset */}
+                          {addingApprovalId === item.id && (
+                            <div className="absolute left-0 bottom-full mb-1 z-30 bg-white border border-slate-200 rounded-xl p-3 shadow-xl w-[220px] space-y-2">
+                              <h5 className="font-bold text-[11px] text-slate-800">Set Approval Deliverable</h5>
+                              <input
+                                type="text"
+                                placeholder="Asset Name (e.g. Promo Cut)"
+                                value={newAppTitle}
+                                onChange={(e) => setNewAppTitle(e.target.value)}
+                                className="w-full border border-slate-200 rounded px-2 py-1 text-[10px] focus:outline-none"
+                              />
+                              <div className="grid grid-cols-2 gap-1.5">
+                                <select
+                                  value={newAppType}
+                                  onChange={(e) => setNewAppType(e.target.value as any)}
+                                  className="w-full border border-slate-200 rounded px-1.5 py-1 text-[10px] bg-white cursor-pointer"
+                                >
+                                  <option value="Graphic">🖼 Graphic</option>
+                                  <option value="Video">🎥 Video</option>
+                                  <option value="PDF">📄 PDF</option>
+                                </select>
+                                <button
+                                  type="button"
+                                  onClick={() => handleAddApprovalAsset(item.id)}
+                                  className="bg-indigo-600 text-white font-bold rounded text-[9px] hover:bg-indigo-700"
+                                >
+                                  Load File
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </td>
+
+                    {/* Cell 9: Status dropdown */}
                     <td className="p-2">
                       <select
                         value={item.status}
@@ -396,7 +722,7 @@ export default function ContentPipelineTable() {
                           placeholder="Notes..."
                           value={item.dynamicValues[col] || ''}
                           onChange={(e) => handleUpdateCustomVal(item.id, col, e.target.value)}
-                          className="w-full border border-slate-200 focus:border-blue-400 rounded px-2 py-1.5 text-xs focus:outline-none bg-white"
+                          className="w-full border border-slate-200 focus:border-blue-400 rounded px-2.5 py-1.5 text-xs focus:outline-none bg-white"
                         />
                       </td>
                     ))}
@@ -421,6 +747,140 @@ export default function ContentPipelineTable() {
           </table>
         </div>
       </div>
+
+      {/* LIGHTBOX PREVIEW MODAL: Media Player for Videos, Lightbox for Images, Page Reader for PDFs */}
+      {previewingAsset && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-3xl overflow-hidden animate-zoom-in flex flex-col">
+            
+            {/* Modal Header */}
+            <div className="bg-slate-900 text-white p-5 flex justify-between items-center shrink-0">
+              <div className="flex items-center gap-3">
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded font-mono uppercase ${
+                  previewingAsset.asset.type === 'Video' ? 'bg-indigo-600 text-white' :
+                  previewingAsset.asset.type === 'Graphic' ? 'bg-teal-600 text-white' :
+                  'bg-rose-600 text-white'
+                }`}>
+                  {previewingAsset.asset.type} Deliverable
+                </span>
+                <h3 className="font-extrabold text-sm md:text-base tracking-tight">{previewingAsset.asset.title}</h3>
+              </div>
+              <button 
+                onClick={() => {
+                  setPreviewingAsset(null);
+                  setPdfPageIdx(0);
+                }} 
+                className="text-slate-400 hover:text-white transition font-bold"
+              >
+                ✕ Close
+              </button>
+            </div>
+
+            {/* Modal Media Body (Plays loops, displays graphics, pages documents) */}
+            <div className="p-6 bg-slate-950 flex-1 flex items-center justify-center min-h-[350px] max-h-[550px] overflow-y-auto">
+              
+              {/* Type A: Interactive HTML5 Video Stream */}
+              {previewingAsset.asset.type === 'Video' && (
+                <div className="w-full max-w-2xl text-center space-y-4">
+                  <video 
+                    src={previewingAsset.asset.url} 
+                    controls 
+                    autoPlay 
+                    loop 
+                    className="w-full max-h-[380px] rounded-lg shadow-xl shadow-slate-900/50 border border-slate-800"
+                  />
+                  <p className="text-xs text-slate-400 font-mono italic">Playing direct MP4 asset loop</p>
+                </div>
+              )}
+
+              {/* Type B: High-res Graphic Lightbox */}
+              {previewingAsset.asset.type === 'Graphic' && (
+                <div className="w-full max-w-2xl text-center space-y-4">
+                  <img 
+                    src={previewingAsset.asset.url} 
+                    alt={previewingAsset.asset.title} 
+                    className="max-h-[380px] mx-auto rounded-lg shadow-xl object-contain border border-slate-800"
+                  />
+                  <p className="text-xs text-slate-400 font-mono italic">Reviewing high-contrast design artwork</p>
+                </div>
+              )}
+
+              {/* Type C: Simulated Multi-Page PDF Document Slideshow */}
+              {previewingAsset.asset.type === 'PDF' && previewingAsset.asset.pdfPages && (
+                <div className="w-full max-w-xl bg-white border border-slate-200 rounded-xl p-8 shadow-2xl min-h-[250px] flex flex-col justify-between text-slate-800 space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                      <span className="text-[10px] text-rose-600 font-bold uppercase tracking-widest font-mono">
+                        Document Specification
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono font-bold">
+                        Slide {pdfPageIdx + 1} of {previewingAsset.asset.pdfPages.length}
+                      </span>
+                    </div>
+                    {/* Simulated PDF text content */}
+                    <div className="text-xs md:text-sm font-medium leading-relaxed font-mono whitespace-pre-wrap text-slate-700 min-h-[120px]">
+                      {previewingAsset.asset.pdfPages[pdfPageIdx]}
+                    </div>
+                  </div>
+                  {/* PDF Navigation Buttons */}
+                  <div className="flex justify-between items-center border-t border-slate-100 pt-4 shrink-0">
+                    <button
+                      type="button"
+                      disabled={pdfPageIdx === 0}
+                      onClick={() => setPdfPageIdx(prev => Math.max(0, prev - 1))}
+                      className="px-3 py-1.5 text-[11px] font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg"
+                    >
+                      ◀ Previous Slide
+                    </button>
+                    <button
+                      type="button"
+                      disabled={pdfPageIdx === previewingAsset.asset.pdfPages.length - 1}
+                      onClick={() => setPdfPageIdx(prev => Math.min(previewingAsset.asset.pdfPages!.length - 1, prev + 1))}
+                      className="px-3 py-1.5 text-[11px] font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg"
+                    >
+                      Next Slide ▶
+                    </button>
+                  </div>
+                </div>
+              )}
+
+            </div>
+
+            {/* Modal Footer (Direct approval workflow connection) */}
+            <div className="p-4 border-t border-slate-200 bg-slate-50 px-6 flex flex-col sm:flex-row justify-between items-center gap-4 shrink-0">
+              <div className="text-center sm:text-left">
+                <span className="text-[10px] text-slate-400 font-bold uppercase block tracking-wider">
+                  Client Approval Decision
+                </span>
+                <span className="text-xs text-slate-600 font-medium">
+                  Reviewing deliverable for client account: <strong>{previewingAsset.item.clientName}</strong>
+                </span>
+              </div>
+              <div className="flex gap-2.5">
+                <button
+                  onClick={() => handleApproveWorkflow('In Progress')}
+                  className="px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-100 rounded-xl text-xs font-bold uppercase tracking-wider transition"
+                >
+                  Reject & Re-Edit
+                </button>
+                <button
+                  onClick={() => handleApproveWorkflow('Scheduled')}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-md shadow-indigo-600/10"
+                >
+                  Approve & Schedule
+                </button>
+                <button
+                  onClick={() => handleApproveWorkflow('Completed')}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-md shadow-emerald-600/10"
+                >
+                  Approve & Complete
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }
