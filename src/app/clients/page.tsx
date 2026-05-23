@@ -503,8 +503,8 @@ export default function ClientsDatabaseDashboard() {
           {/* MODAL: Modify Client Details */}
           {editingClient && (
             <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-2xl overflow-hidden animate-zoom-in">
-                <div className="bg-slate-900 text-white p-6 flex justify-between items-center">
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-2xl overflow-hidden animate-zoom-in flex flex-col max-h-[90vh]">
+                <div className="bg-slate-900 text-white p-6 flex justify-between items-center shrink-0">
                   <div>
                     <h3 className="font-bold text-lg">Modify Client Records</h3>
                     <p className="text-xs text-slate-400">Settings will dynamically update across all active dashboard panels.</p>
@@ -513,8 +513,8 @@ export default function ClientsDatabaseDashboard() {
                     ✕
                   </button>
                 </div>
-                <form onSubmit={handleSaveClientEdits} className="p-6 space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                <form onSubmit={handleSaveClientEdits} className="p-6 space-y-4 overflow-y-auto">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Company Name</label>
                       <input
@@ -537,7 +537,7 @@ export default function ClientsDatabaseDashboard() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Email Address</label>
                       <input
@@ -581,7 +581,7 @@ export default function ClientsDatabaseDashboard() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Posts Scheduled</label>
                       <input
@@ -614,7 +614,7 @@ export default function ClientsDatabaseDashboard() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Services Taken (Comma Separated)</label>
                       <input
@@ -660,8 +660,8 @@ export default function ClientsDatabaseDashboard() {
           {/* MODAL: Modify Custom Sections (Manually created brand details) */}
           {editingSectionsClient && (
             <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-xl overflow-hidden animate-zoom-in">
-                <div className="bg-slate-900 text-white p-6 flex justify-between items-center">
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-xl overflow-hidden animate-zoom-in flex flex-col max-h-[90vh]">
+                <div className="bg-slate-900 text-white p-6 flex justify-between items-center shrink-0">
                   <div>
                     <h3 className="font-bold text-lg">Modify Custom Brand Guidelines</h3>
                     <p className="text-xs text-slate-400">Configure manually created sections to adapt brand assets.</p>
@@ -670,7 +670,7 @@ export default function ClientsDatabaseDashboard() {
                     ✕
                   </button>
                 </div>
-                <form onSubmit={handleSaveSections} className="p-6 space-y-4">
+                <form onSubmit={handleSaveSections} className="p-6 space-y-4 overflow-y-auto">
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Section 1: Brand Guidelines</label>
                     <textarea
@@ -754,8 +754,8 @@ export default function ClientsDatabaseDashboard() {
           {/* MODAL: Register New Client (Manual Upload) */}
           {showAddClientModal && (
             <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-2xl overflow-hidden animate-zoom-in">
-                <div className="bg-slate-900 text-white p-6 flex justify-between items-center">
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-2xl overflow-hidden animate-zoom-in flex flex-col max-h-[90vh]">
+                <div className="bg-slate-900 text-white p-6 flex justify-between items-center shrink-0">
                   <div>
                     <h3 className="font-bold text-lg">Register New Client Account</h3>
                     <p className="text-xs text-slate-400">Establish corporate credentials and services package details.</p>
@@ -764,8 +764,8 @@ export default function ClientsDatabaseDashboard() {
                     ✕
                   </button>
                 </div>
-                <form onSubmit={handleCreateClient} className="p-6 space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                <form onSubmit={handleCreateClient} className="p-6 space-y-4 overflow-y-auto">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Company Name</label>
                       <input
@@ -789,7 +789,7 @@ export default function ClientsDatabaseDashboard() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Email Address</label>
                       <input
@@ -823,7 +823,7 @@ export default function ClientsDatabaseDashboard() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Credentials Vault Details</label>
                       <input
@@ -846,7 +846,7 @@ export default function ClientsDatabaseDashboard() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Services list (comma separated)</label>
                       <input

@@ -512,8 +512,8 @@ export default function CampaignsDashboard() {
       {/* MODAL: Modify Ad Campaign Settings */}
       {editingCampaign && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg overflow-hidden animate-zoom-in">
-            <div className="bg-slate-900 text-white p-6 flex justify-between items-center">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg overflow-hidden animate-zoom-in flex flex-col max-h-[90vh]">
+            <div className="bg-slate-900 text-white p-6 flex justify-between items-center shrink-0">
               <div>
                 <h3 className="font-bold text-lg">Modify Campaign Parameters</h3>
                 <p className="text-xs text-slate-400">Settings will dynamically sync throughout the reporting system.</p>
@@ -525,7 +525,7 @@ export default function CampaignsDashboard() {
                 ✕
               </button>
             </div>
-            <form onSubmit={handleSaveCampaign} className="p-6 space-y-4">
+            <form onSubmit={handleSaveCampaign} className="p-6 space-y-4 overflow-y-auto">
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Campaign Name</label>
                 <input
@@ -536,7 +536,7 @@ export default function CampaignsDashboard() {
                   className="w-full border border-slate-200 rounded-lg p-2.5 text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Daily Budget ($)</label>
                   <input
@@ -558,7 +558,7 @@ export default function CampaignsDashboard() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">ROAS Target Value</label>
                   <input
@@ -606,8 +606,8 @@ export default function CampaignsDashboard() {
       {/* MODAL: Configure Pixel Tracker */}
       {editingPixel && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg overflow-hidden animate-zoom-in">
-            <div className="bg-slate-900 text-white p-6 flex justify-between items-center">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg overflow-hidden animate-zoom-in flex flex-col max-h-[90vh]">
+            <div className="bg-slate-900 text-white p-6 flex justify-between items-center shrink-0">
               <div>
                 <h3 className="font-bold text-lg">Modify JS Tracking Tags</h3>
                 <p className="text-xs text-slate-400">Specify unique validation tokens or platform script parameters.</p>
@@ -619,7 +619,7 @@ export default function CampaignsDashboard() {
                 ✕
               </button>
             </div>
-            <form onSubmit={handleSavePixel} className="p-6 space-y-4">
+            <form onSubmit={handleSavePixel} className="p-6 space-y-4 overflow-y-auto">
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tracker Integration Name</label>
                 <input
