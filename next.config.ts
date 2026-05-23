@@ -1,11 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: 'export',
-  basePath: '/CRM-OF-UPLIFT',
-  images: {
-    unoptimized: true,
-  },
+  // Configured for native Vercel and local root development
 };
 
 export default nextConfig;
