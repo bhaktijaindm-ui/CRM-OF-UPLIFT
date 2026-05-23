@@ -46,6 +46,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   <span className="h-2 w-2 rounded-full bg-indigo-500 group-hover:scale-125 transition-transform" />
                   Operational Audits
                 </Link>
+                <Link href="/campaigns" className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-slate-800 hover:text-white transition-all group">
+                  <span className="h-2 w-2 rounded-full bg-rose-500 group-hover:scale-125 transition-transform" />
+                  Ad Campaigns & Pixels
+                </Link>
               </nav>
 
               <div className="p-4 border-t border-slate-800 bg-slate-950/40 flex items-center gap-3">
