@@ -262,7 +262,7 @@ export default function ContentPipelineTable() {
           <table className="w-full text-left border-collapse table-fixed min-w-[1200px]">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50/70 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                <th className="p-3 pl-6 w-[160px]">Task Code</th>
+                <th className="p-3 pl-6 w-[150px] sticky left-0 bg-slate-50 z-20 border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Task Code</th>
                 <th className="p-3 w-[180px]">Client Name</th>
                 <th className="p-3 w-[150px]">Hosting / Format</th>
                 <th className="p-3 w-[220px]">Content details</th>
@@ -283,10 +283,10 @@ export default function ContentPipelineTable() {
               {contentList.map((item, idx) => {
                 const autoCode = generateTaskCode(item, idx);
                 return (
-                  <tr key={item.id} className="hover:bg-slate-50/40 transition-colors">
+                  <tr key={item.id} className="group hover:bg-slate-50/40 transition-colors">
                     
                     {/* Cell 1: Auto generated Task Code */}
-                    <td className="p-3 pl-6">
+                    <td className="p-3 pl-6 sticky left-0 bg-white group-hover:bg-slate-50 z-10 border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                       <span className="inline-block px-2.5 py-1 bg-slate-100 text-slate-700 font-mono text-[11px] font-bold rounded-lg border border-slate-200/60 shadow-sm">
                         {autoCode}
                       </span>
