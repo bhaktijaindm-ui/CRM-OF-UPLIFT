@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useCRM } from '../../components/SharedStateContext';
 
 interface PixelTracker {
@@ -186,13 +187,14 @@ export default function CampaignsDashboard() {
   return (
     <div className="space-y-8 relative">
       {/* Toast Notification */}
-      {notification && (
-        <div className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-xl shadow-xl text-white font-semibold flex items-center gap-3 transition-all duration-300 animate-slide-in ${
+      {notification && typeof window !== 'undefined' && createPortal(
+        <div className={`fixed top-4 right-4 z-[999999] px-6 py-4 rounded-xl shadow-2xl text-white font-semibold flex items-center gap-3 transition-all duration-300 animate-slide-in ${
           notification.type === 'success' ? 'bg-emerald-600 shadow-emerald-500/20' : 'bg-blue-600 shadow-blue-500/20'
         }`}>
           <span>{notification.type === 'success' ? '✓' : 'ℹ'}</span>
           <span>{notification.message}</span>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Page Header */}

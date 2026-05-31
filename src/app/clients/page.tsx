@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useCRM } from '../../components/SharedStateContext';
+import { useAuth } from '../../context/AuthContext';
 
 interface ClientCustomSections {
   brandGuidelines: string;
@@ -32,9 +34,9 @@ interface ClientExtended {
 export default function ClientsDatabaseDashboard() {
   const { clients: crmClients } = useCRM();
 
-  // 1. Role / Access Control Simulator State
-  const [currentUserEmail, setCurrentUserEmail] = useState<string>('bhaktijaindm@gmail.com');
-  const isAdmin = currentUserEmail === 'bhaktijaindm@gmail.com';
+  // 1. Authentication & Role check
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   // 2. Client Database Local State (supports manual edit, upload, and new entries)
   const [clientsList, setClientsList] = useState<ClientExtended[]>([
@@ -227,63 +229,16 @@ export default function ClientsDatabaseDashboard() {
   return (
     <div className="space-y-8 relative">
       {/* Toast Banner */}
-      {toastMessage && (
-        <div className="fixed top-4 right-4 z-50 px-6 py-4 rounded-xl shadow-xl bg-slate-900 border border-slate-700 text-white font-semibold flex items-center gap-2 animate-slide-in">
-          <span>✓</span>
+      {toastMessage && typeof window !== 'undefined' && createPortal(
+        <div className="fixed top-4 right-4 z-[999999] px-6 py-4 rounded-xl shadow-2xl bg-slate-900 border border-slate-700 text-white font-semibold flex items-center gap-2.5 animate-slide-in">
+          <span className="text-emerald-500 font-bold">✓</span>
           <span>{toastMessage}</span>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* Role / Access Control Simulator Header */}
-      <div className="bg-slate-900 text-white rounded-2xl p-6 shadow-lg border border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-lg">
-            🔒
-          </div>
-          <div>
-            <h2 className="text-base font-bold tracking-tight">Security Envelope Controller</h2>
-            <p className="text-xs text-slate-400">Restricted client database views. Test access control logic by switching roles.</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 bg-slate-800 border border-slate-700 rounded-xl p-2.5">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1.5">User Identity:</span>
-          <select
-            value={currentUserEmail}
-            onChange={(e) => setCurrentUserEmail(e.target.value)}
-            className="bg-slate-950 text-white border border-slate-700 rounded-lg py-1 px-3 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
-          >
-            <option value="bhaktijaindm@gmail.com">bhaktijaindm@gmail.com (ADMIN)</option>
-            <option value="guest@firm.com">guest@firm.com (Viewer - Staff)</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Access Denied Shield */}
-      {!isAdmin ? (
-        <div className="bg-white/80 backdrop-blur border border-red-200 rounded-2xl p-16 shadow-xl flex flex-col items-center justify-center text-center space-y-4 max-w-4xl mx-auto">
-          <div className="w-20 h-20 rounded-full bg-red-50 text-red-500 border border-red-200 flex items-center justify-center text-4xl shadow-inner shadow-red-500/5 animate-pulse">
-            ✕
-          </div>
-          <div className="space-y-1">
-            <h3 className="text-2xl font-black text-slate-900 tracking-tight">Access Control Breach Prevented</h3>
-            <p className="text-slate-500 font-mono text-xs">Security Protocol: Admin Authorization Token Missing</p>
-          </div>
-          <p className="text-sm text-slate-500 max-w-md leading-relaxed">
-            The client credentials database contains critical passwords, server tokens, and strategic assets. 
-            Only accounts matching administrator credentials (**`bhaktijaindm@gmail.com`**) are permitted to access this sector.
-          </p>
-          <div className="pt-4">
-            <button
-              onClick={() => setCurrentUserEmail('bhaktijaindm@gmail.com')}
-              className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-lg shadow-slate-900/10"
-            >
-              Simulate Admin Log In
-            </button>
-          </div>
-        </div>
-      ) : (
-        /* Unlocked Database Dashboard Content */
-        <div className="space-y-8 animate-fade-in">
+      {/* Unlocked Database Dashboard Content */}
+      <div className="space-y-8 animate-fade-in">
           
           {/* Section Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -889,8 +844,7 @@ export default function ClientsDatabaseDashboard() {
             </div>
           )}
 
-        </div>
-      )}
+      </div>
     </div>
   );
 }

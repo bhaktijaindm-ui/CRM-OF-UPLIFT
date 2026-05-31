@@ -2,8 +2,10 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useAuth } from '../context/AuthContext';
 
 export default function Sidebar() {
+  const { user, logout } = useAuth();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const toggleMobileMenu = () => setIsMobileOpen(prev => !prev);
@@ -45,13 +47,31 @@ export default function Sidebar() {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-slate-800 bg-slate-950/40 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center font-semibold text-xs text-white">BJ</div>
-          <div className="overflow-hidden">
-            <p className="text-sm font-semibold text-white truncate">Bhakti Jain</p>
-            <p className="text-xs text-slate-400 truncate">SEO Director</p>
+        {user && (
+          <div className="p-4 border-t border-slate-800 bg-slate-950/40 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 overflow-hidden">
+              <img
+                src={user.avatar}
+                alt={user.name}
+                className="w-9 h-9 rounded-full object-cover border border-slate-700"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150';
+                }}
+              />
+              <div className="overflow-hidden">
+                <p className="text-sm font-semibold text-white truncate">{user.name}</p>
+                <p className="text-[10px] text-slate-400 truncate font-mono uppercase tracking-wider">{user.role}</p>
+              </div>
+            </div>
+            <button
+              onClick={logout}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors shrink-0 text-sm"
+              title="Sign Out"
+            >
+              Sign Out
+            </button>
           </div>
-        </div>
+        )}
       </aside>
 
       {/* 2. Mobile Top Navigation Bar (Visible on mobile/tablet below 1024px) */}
@@ -117,13 +137,31 @@ export default function Sidebar() {
               ))}
             </nav>
 
-            <div className="p-4 border-t border-slate-800 bg-slate-950/40 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center font-semibold text-xs text-white">BJ</div>
-              <div className="overflow-hidden">
-                <p className="text-sm font-semibold text-white truncate">Bhakti Jain</p>
-                <p className="text-xs text-slate-400 truncate">SEO Director</p>
+            {user && (
+              <div className="p-4 border-t border-slate-800 bg-slate-950/40 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 overflow-hidden">
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="w-9 h-9 rounded-full object-cover border border-slate-700"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150';
+                    }}
+                  />
+                  <div className="overflow-hidden">
+                    <p className="text-sm font-semibold text-white truncate">{user.name}</p>
+                    <p className="text-[10px] text-slate-400 truncate font-mono uppercase tracking-wider">{user.role}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={logout}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors shrink-0 text-xs font-bold"
+                  title="Sign Out"
+                >
+                  Sign Out
+                </button>
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}

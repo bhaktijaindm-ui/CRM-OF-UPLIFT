@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useCRM } from '../../components/SharedStateContext';
+import { useAuth } from '../../context/AuthContext';
 
 interface AttachmentItem {
   id: string;
@@ -33,9 +35,9 @@ interface ContentItemExtended {
 export default function ContentPipelineTable() {
   const { clients } = useCRM();
 
-  // 1. Role Selector State
-  const [currentUserEmail, setCurrentUserEmail] = useState<string>('bhaktijaindm@gmail.com');
-  const isAdmin = currentUserEmail === 'bhaktijaindm@gmail.com';
+  // 1. Authentication & Role check
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   // 2. Content items list state with media objects pre-seeded
   const [contentList, setContentList] = useState<ContentItemExtended[]>([
@@ -111,14 +113,25 @@ export default function ContentPipelineTable() {
   const [newAttName, setNewAttName] = useState('');
   const [newAttType, setNewAttType] = useState<AttachmentItem['type']>('Link');
   const [newAttUrl, setNewAttUrl] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const [addingApprovalId, setAddingApprovalId] = useState<string | null>(null);
   const [newAppType, setNewAppType] = useState<ApprovalAssetItem['type']>('Graphic');
   const [newAppTitle, setNewAppTitle] = useState('');
+  const [newAppUrl, setNewAppUrl] = useState('');
+  const [selectedApprovalFile, setSelectedApprovalFile] = useState<File | null>(null);
   const [selectedMockPreset, setSelectedMockPreset] = useState<string>('nature-video');
 
   // 5. Lightbox Preview Modal State
-  const [previewingAsset, setPreviewingAsset] = useState<{ item: ContentItemExtended; asset: ApprovalAssetItem } | null>(null);
+  interface PreviewAsset {
+    clientName: string;
+    title: string;
+    type: 'Link' | 'Document' | 'Image' | 'Video' | 'Text' | 'Graphic' | 'PDF';
+    url: string;
+    pdfPages?: string[];
+    itemId?: string; // present only for approval workflow items
+  }
+  const [previewingAsset, setPreviewingAsset] = useState<PreviewAsset | null>(null);
   const [pdfPageIdx, setPdfPageIdx] = useState(0);
 
   // Toast Notification state
@@ -227,16 +240,27 @@ export default function ContentPipelineTable() {
       triggerToast('Permission Denied: Only administrators can upload/add attachments.');
       return;
     }
-    if (!newAttName.trim() || !newAttUrl.trim()) {
-      triggerToast('Please provide an asset title and resource URL.');
+    
+    let finalUrl = newAttUrl.trim();
+    let finalName = newAttName.trim();
+
+    if (selectedFile) {
+      finalUrl = URL.createObjectURL(selectedFile);
+      if (!finalName) {
+        finalName = selectedFile.name;
+      }
+    }
+
+    if (!finalName || !finalUrl) {
+      triggerToast('Please provide an asset title and resource file or URL.');
       return;
     }
 
     const newAtt: AttachmentItem = {
       id: `att-${Date.now()}`,
-      name: newAttName.trim(),
+      name: finalName,
       type: newAttType,
-      url: newAttUrl.trim()
+      url: finalUrl
     };
 
     setContentList(prev =>
@@ -251,6 +275,7 @@ export default function ContentPipelineTable() {
     setAddingAttachmentId(null);
     setNewAttName('');
     setNewAttUrl('');
+    setSelectedFile(null);
     triggerToast(`Added attachment "${newAtt.name}"`);
   };
 
@@ -281,15 +306,25 @@ export default function ContentPipelineTable() {
       return;
     }
 
-    let url = '';
+    let url = newAppUrl.trim();
     let pages: string[] | undefined = undefined;
 
-    if (newAppType === 'Video') {
-      url = 'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4';
-    } else if (newAppType === 'Graphic') {
-      url = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80';
-    } else if (newAppType === 'PDF') {
-      url = 'MOCK_PDF_FILE';
+    if (selectedApprovalFile) {
+      url = URL.createObjectURL(selectedApprovalFile);
+    } else if (!url) {
+      if (newAppType === 'Video') {
+        url = 'https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4';
+      } else if (newAppType === 'Graphic') {
+        url = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80';
+      } else if (newAppType === 'PDF') {
+        url = 'MOCK_PDF_FILE';
+        pages = [
+          'PAGE 1: BRAND CAMPAIGN ASSETS OVERVIEW\n\nGraphic layouts focus on deep brand identity integration. Target dispatches scheduled for Q2.',
+          'PAGE 2: PLATFORM DISTRIBUTION\n\n- Meta Ads: 3 Reels + 2 Carousels\n- Google Ads: 1 Search campaign\n- LinkedIn Ads: 2 InMails',
+          'PAGE 3: COMPLIANCE SPECS\n\nAll media assets must adhere to local MP state advertising standards. Final clearance requested.'
+        ];
+      }
+    } else if (newAppType === 'PDF' && url === 'MOCK_PDF_FILE') {
       pages = [
         'PAGE 1: BRAND CAMPAIGN ASSETS OVERVIEW\n\nGraphic layouts focus on deep brand identity integration. Target dispatches scheduled for Q2.',
         'PAGE 2: PLATFORM DISTRIBUTION\n\n- Meta Ads: 3 Reels + 2 Carousels\n- Google Ads: 1 Search campaign\n- LinkedIn Ads: 2 InMails',
@@ -314,6 +349,8 @@ export default function ContentPipelineTable() {
 
     setAddingApprovalId(null);
     setNewAppTitle('');
+    setNewAppUrl('');
+    setSelectedApprovalFile(null);
     triggerToast(`Registered approval item: ${newApproval.title}`);
   };
 
@@ -333,8 +370,8 @@ export default function ContentPipelineTable() {
 
   // Direct Modal Approval Workflow Action
   const handleApproveWorkflow = (status: ContentItemExtended['status']) => {
-    if (!previewingAsset) return;
-    handleUpdateCell(previewingAsset.item.id, 'status', status);
+    if (!previewingAsset || !previewingAsset.itemId) return;
+    handleUpdateCell(previewingAsset.itemId, 'status', status);
     setPreviewingAsset(null);
     triggerToast(`Item workflow status updated to: ${status}`);
   };
@@ -342,36 +379,15 @@ export default function ContentPipelineTable() {
   return (
     <div className="space-y-8 relative">
       {/* Toast banner */}
-      {toastMessage && (
-        <div className="fixed top-4 right-4 z-50 px-6 py-4 rounded-xl shadow-xl bg-slate-900 border border-slate-700 text-white font-semibold flex items-center gap-2 animate-slide-in">
-          <span>✓</span>
+      {toastMessage && typeof window !== 'undefined' && createPortal(
+        <div className="fixed top-4 right-4 z-[999999] px-6 py-4 rounded-xl shadow-2xl bg-slate-900 border border-slate-700 text-white font-semibold flex items-center gap-2.5 animate-slide-in">
+          <span className="text-emerald-500 font-bold">✓</span>
           <span>{toastMessage}</span>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* Security Switcher header */}
-      <div className="bg-slate-900 text-white rounded-2xl p-6 shadow-lg border border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-lg">
-            🔑
-          </div>
-          <div>
-            <h2 className="text-base font-bold tracking-tight">Social Media Content Access Console</h2>
-            <p className="text-xs text-slate-400">All roles edit cells. Only Admins can create rows, add columns, and load assets.</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 bg-slate-800 border border-slate-700 rounded-xl p-2.5">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1.5">Browsing Role:</span>
-          <select
-            value={currentUserEmail}
-            onChange={(e) => setCurrentUserEmail(e.target.value)}
-            className="bg-slate-950 text-white border border-slate-700 rounded-lg py-1 px-3 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
-          >
-            <option value="bhaktijaindm@gmail.com">bhaktijaindm@gmail.com (ADMIN - Full Access)</option>
-            <option value="guest@firm.com">guest@firm.com (Staff - Edit Cells Only)</option>
-          </select>
-        </div>
-      </div>
+      {/* Social Media Content Grid Header */}
 
       {/* Header Info */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -536,27 +552,46 @@ export default function ContentPipelineTable() {
                       <div className="space-y-1.5">
                         <div className="flex flex-wrap gap-1">
                           {item.attachments.map((att) => (
-                            <span 
+                            <div 
                               key={att.id} 
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-bold border border-slate-200 shadow-sm"
-                              title={`${att.type}: ${att.url}`}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-200/50 shadow-sm hover:bg-blue-100 hover:text-blue-900 transition shrink-0"
                             >
-                              <span>
-                                {att.type === 'Link' ? '🔗' :
-                                 att.type === 'Document' ? '📄' :
-                                 att.type === 'Image' ? '🖼' :
-                                 att.type === 'Video' ? '🎥' : '✍'}
-                              </span>
-                              <span className="max-w-[70px] truncate">{att.name}</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if ((att.type === 'Link' || att.type === 'Document') && att.url.startsWith('http')) {
+                                    window.open(att.url, '_blank', 'noopener,noreferrer');
+                                    triggerToast(`Opening link: ${att.name}`);
+                                  } else {
+                                    setPreviewingAsset({
+                                      clientName: item.clientName,
+                                      title: att.name,
+                                      type: att.type,
+                                      url: att.url,
+                                      pdfPages: att.type === 'Document' && !att.url.startsWith('http') ? [att.url] : undefined
+                                    });
+                                  }
+                                }}
+                                className="flex items-center gap-1 focus:outline-none text-left"
+                                title={`Click to open/preview: ${att.type}: ${att.url}`}
+                              >
+                                <span>
+                                  {att.type === 'Link' ? '🔗' :
+                                   att.type === 'Document' ? '📄' :
+                                   att.type === 'Image' ? '🖼' :
+                                   att.type === 'Video' ? '🎥' : '✍'}
+                                </span>
+                                <span className="max-w-[75px] truncate">{att.name}</span>
+                              </button>
                               {isAdmin && (
                                 <button 
                                   onClick={() => handleRemoveAttachment(item.id, att.id)}
-                                  className="text-[9px] text-slate-400 hover:text-rose-600 font-bold ml-1"
+                                  className="text-[9px] text-blue-400 hover:text-rose-600 font-bold ml-1.5 focus:outline-none"
                                 >
                                   ✕
                                 </button>
                               )}
-                            </span>
+                            </div>
                           ))}
                         </div>
                         {isAdmin ? (
@@ -570,46 +605,6 @@ export default function ContentPipelineTable() {
                           <span className="text-[10px] text-slate-400 font-medium italic">🔒 Admin only</span>
                         )}
 
-                        {/* Inline popover helper to configure attachment */}
-                        {addingAttachmentId === item.id && (
-                          <div className="absolute left-0 bottom-full mb-1 z-30 bg-white border border-slate-200 rounded-xl p-3 shadow-xl w-[220px] space-y-2">
-                            <h5 className="font-bold text-[11px] text-slate-800">Add Attachments Rule</h5>
-                            <input
-                              type="text"
-                              placeholder="Asset Title (e.g. Brief v2)"
-                              value={newAttName}
-                              onChange={(e) => setNewAttName(e.target.value)}
-                              className="w-full border border-slate-200 rounded px-2 py-1 text-[10px] focus:outline-none"
-                            />
-                            <div className="grid grid-cols-2 gap-1.5">
-                              <select
-                                value={newAttType}
-                                onChange={(e) => setNewAttType(e.target.value as any)}
-                                className="w-full border border-slate-200 rounded px-1.5 py-1 text-[10px] bg-white cursor-pointer"
-                              >
-                                <option value="Link">🔗 Link</option>
-                                <option value="Document">📄 Doc</option>
-                                <option value="Image">🖼 Image</option>
-                                <option value="Video">🎥 Video</option>
-                                <option value="Text">✍ Text</option>
-                              </select>
-                              <button
-                                type="button"
-                                onClick={() => handleAddAttachment(item.id)}
-                                className="bg-slate-900 text-white font-bold rounded text-[9px] hover:bg-slate-800"
-                              >
-                                Add
-                              </button>
-                            </div>
-                            <input
-                              type="text"
-                              placeholder="URL Link or Text details"
-                              value={newAttUrl}
-                              onChange={(e) => setNewAttUrl(e.target.value)}
-                              className="w-full border border-slate-200 rounded px-2 py-1 text-[10px] focus:outline-none font-mono"
-                            />
-                          </div>
-                        )}
                       </div>
                     </td>
 
@@ -618,7 +613,14 @@ export default function ContentPipelineTable() {
                       {item.approvalAsset ? (
                         <div className="flex items-center gap-1.5">
                           <button
-                            onClick={() => setPreviewingAsset({ item, asset: item.approvalAsset! })}
+                            onClick={() => setPreviewingAsset({
+                              clientName: item.clientName,
+                              title: item.approvalAsset!.title,
+                              type: item.approvalAsset!.type,
+                              url: item.approvalAsset!.url,
+                              pdfPages: item.approvalAsset!.pdfPages,
+                              itemId: item.id
+                            })}
                             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold shadow-sm border transition text-left shrink-0 ${
                               item.approvalAsset.type === 'Video' ? 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100' :
                               item.approvalAsset.type === 'Graphic' ? 'bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-100' :
@@ -656,37 +658,6 @@ export default function ContentPipelineTable() {
                             <span className="text-[10px] text-slate-400 font-medium italic">🔒 Admin only</span>
                           )}
 
-                          {/* Popover to select mock approval preset */}
-                          {addingApprovalId === item.id && (
-                            <div className="absolute left-0 bottom-full mb-1 z-30 bg-white border border-slate-200 rounded-xl p-3 shadow-xl w-[220px] space-y-2">
-                              <h5 className="font-bold text-[11px] text-slate-800">Set Approval Deliverable</h5>
-                              <input
-                                type="text"
-                                placeholder="Asset Name (e.g. Promo Cut)"
-                                value={newAppTitle}
-                                onChange={(e) => setNewAppTitle(e.target.value)}
-                                className="w-full border border-slate-200 rounded px-2 py-1 text-[10px] focus:outline-none"
-                              />
-                              <div className="grid grid-cols-2 gap-1.5">
-                                <select
-                                  value={newAppType}
-                                  onChange={(e) => setNewAppType(e.target.value as any)}
-                                  className="w-full border border-slate-200 rounded px-1.5 py-1 text-[10px] bg-white cursor-pointer"
-                                >
-                                  <option value="Graphic">🖼 Graphic</option>
-                                  <option value="Video">🎥 Video</option>
-                                  <option value="PDF">📄 PDF</option>
-                                </select>
-                                <button
-                                  type="button"
-                                  onClick={() => handleAddApprovalAsset(item.id)}
-                                  className="bg-indigo-600 text-white font-bold rounded text-[9px] hover:bg-indigo-700"
-                                >
-                                  Load File
-                                </button>
-                              </div>
-                            </div>
-                          )}
                         </div>
                       )}
                     </td>
@@ -757,20 +728,20 @@ export default function ContentPipelineTable() {
             <div className="bg-slate-900 text-white p-5 flex justify-between items-center shrink-0">
               <div className="flex items-center gap-3">
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded font-mono uppercase ${
-                  previewingAsset.asset.type === 'Video' ? 'bg-indigo-600 text-white' :
-                  previewingAsset.asset.type === 'Graphic' ? 'bg-teal-600 text-white' :
+                  previewingAsset.type === 'Video' ? 'bg-indigo-600 text-white' :
+                  (previewingAsset.type === 'Graphic' || previewingAsset.type === 'Image') ? 'bg-teal-600 text-white' :
                   'bg-rose-600 text-white'
                 }`}>
-                  {previewingAsset.asset.type} Deliverable
+                  {previewingAsset.type} Asset
                 </span>
-                <h3 className="font-extrabold text-sm md:text-base tracking-tight">{previewingAsset.asset.title}</h3>
+                <h3 className="font-extrabold text-sm md:text-base tracking-tight">{previewingAsset.title}</h3>
               </div>
               <button 
                 onClick={() => {
                   setPreviewingAsset(null);
                   setPdfPageIdx(0);
                 }} 
-                className="text-slate-400 hover:text-white transition font-bold"
+                className="text-slate-400 hover:text-white transition font-bold text-xs border border-slate-700 px-2.5 py-1 rounded-lg bg-slate-800"
               >
                 ✕ Close
               </button>
@@ -780,105 +751,379 @@ export default function ContentPipelineTable() {
             <div className="p-6 bg-slate-950 flex-1 flex items-center justify-center min-h-[350px] max-h-[550px] overflow-y-auto">
               
               {/* Type A: Interactive HTML5 Video Stream */}
-              {previewingAsset.asset.type === 'Video' && (
+              {previewingAsset.type === 'Video' && (
                 <div className="w-full max-w-2xl text-center space-y-4">
                   <video 
-                    src={previewingAsset.asset.url} 
+                    src={previewingAsset.url} 
                     controls 
                     autoPlay 
                     loop 
-                    className="w-full max-h-[380px] rounded-lg shadow-xl shadow-slate-900/50 border border-slate-800"
+                    className="w-full max-h-[380px] rounded-lg shadow-xl shadow-slate-900/50 border border-slate-800 object-contain"
                   />
-                  <p className="text-xs text-slate-400 font-mono italic">Playing direct MP4 asset loop</p>
+                  <p className="text-xs text-slate-400 font-mono italic">Playing direct MP4 video asset</p>
                 </div>
               )}
 
-              {/* Type B: High-res Graphic Lightbox */}
-              {previewingAsset.asset.type === 'Graphic' && (
+              {/* Type B: High-res Graphic/Image Lightbox */}
+              {(previewingAsset.type === 'Graphic' || previewingAsset.type === 'Image') && (
                 <div className="w-full max-w-2xl text-center space-y-4">
                   <img 
-                    src={previewingAsset.asset.url} 
-                    alt={previewingAsset.asset.title} 
+                    src={previewingAsset.url} 
+                    alt={previewingAsset.title} 
                     className="max-h-[380px] mx-auto rounded-lg shadow-xl object-contain border border-slate-800"
                   />
                   <p className="text-xs text-slate-400 font-mono italic">Reviewing high-contrast design artwork</p>
                 </div>
               )}
 
-              {/* Type C: Simulated Multi-Page PDF Document Slideshow */}
-              {previewingAsset.asset.type === 'PDF' && previewingAsset.asset.pdfPages && (
+              {/* Type C: Simulated Multi-Page PDF Document Slideshow / Document text details */}
+              {(previewingAsset.type === 'PDF' || previewingAsset.type === 'Document') && (
                 <div className="w-full max-w-xl bg-white border border-slate-200 rounded-xl p-8 shadow-2xl min-h-[250px] flex flex-col justify-between text-slate-800 space-y-6">
                   <div className="space-y-4">
                     <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                       <span className="text-[10px] text-rose-600 font-bold uppercase tracking-widest font-mono">
                         Document Specification
                       </span>
-                      <span className="text-[10px] text-slate-400 font-mono font-bold">
-                        Slide {pdfPageIdx + 1} of {previewingAsset.asset.pdfPages.length}
-                      </span>
+                      {previewingAsset.pdfPages && previewingAsset.pdfPages.length > 1 && (
+                        <span className="text-[10px] text-slate-400 font-mono font-bold">
+                          Page {pdfPageIdx + 1} of {previewingAsset.pdfPages.length}
+                        </span>
+                      )}
                     </div>
-                    {/* Simulated PDF text content */}
+                    {/* Simulated PDF / Text text content */}
                     <div className="text-xs md:text-sm font-medium leading-relaxed font-mono whitespace-pre-wrap text-slate-700 min-h-[120px]">
-                      {previewingAsset.asset.pdfPages[pdfPageIdx]}
+                      {previewingAsset.pdfPages ? previewingAsset.pdfPages[pdfPageIdx] : previewingAsset.url}
                     </div>
                   </div>
                   {/* PDF Navigation Buttons */}
-                  <div className="flex justify-between items-center border-t border-slate-100 pt-4 shrink-0">
-                    <button
-                      type="button"
-                      disabled={pdfPageIdx === 0}
-                      onClick={() => setPdfPageIdx(prev => Math.max(0, prev - 1))}
-                      className="px-3 py-1.5 text-[11px] font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg"
-                    >
-                      ◀ Previous Slide
-                    </button>
-                    <button
-                      type="button"
-                      disabled={pdfPageIdx === previewingAsset.asset.pdfPages.length - 1}
-                      onClick={() => setPdfPageIdx(prev => Math.min(previewingAsset.asset.pdfPages!.length - 1, prev + 1))}
-                      className="px-3 py-1.5 text-[11px] font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg"
-                    >
-                      Next Slide ▶
-                    </button>
+                  {previewingAsset.pdfPages && previewingAsset.pdfPages.length > 1 && (
+                    <div className="flex justify-between items-center border-t border-slate-100 pt-4 shrink-0">
+                      <button
+                        type="button"
+                        disabled={pdfPageIdx === 0}
+                        onClick={() => setPdfPageIdx(prev => Math.max(0, prev - 1))}
+                        className="px-3 py-1.5 text-[11px] font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg"
+                      >
+                        ◀ Previous Page
+                      </button>
+                      <button
+                        type="button"
+                        disabled={pdfPageIdx === previewingAsset.pdfPages.length - 1}
+                        onClick={() => setPdfPageIdx(prev => Math.min(previewingAsset.pdfPages!.length - 1, prev + 1))}
+                        className="px-3 py-1.5 text-[11px] font-bold border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg"
+                      >
+                        Next Page ▶
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Type D: Text note details / other details */}
+              {(previewingAsset.type === 'Text' || previewingAsset.type === 'Link') && (
+                <div className="w-full max-w-xl bg-white border border-slate-200 rounded-xl p-8 shadow-2xl min-h-[200px] flex flex-col justify-between text-slate-800 space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                      <span className="text-[10px] text-blue-600 font-bold uppercase tracking-widest font-mono">
+                        Asset Details
+                      </span>
+                    </div>
+                    <div className="text-xs md:text-sm font-medium leading-relaxed font-mono whitespace-pre-wrap text-slate-700 min-h-[80px] break-all">
+                      {previewingAsset.url}
+                    </div>
                   </div>
+                  {previewingAsset.url.startsWith('http') && (
+                    <div className="border-t border-slate-100 pt-4 text-right">
+                      <a
+                        href={previewingAsset.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold uppercase tracking-wider transition shadow-md"
+                      >
+                        Open External URL ↗
+                      </a>
+                    </div>
+                  )}
                 </div>
               )}
 
             </div>
 
             {/* Modal Footer (Direct approval workflow connection) */}
-            <div className="p-4 border-t border-slate-200 bg-slate-50 px-6 flex flex-col sm:flex-row justify-between items-center gap-4 shrink-0">
-              <div className="text-center sm:text-left">
-                <span className="text-[10px] text-slate-400 font-bold uppercase block tracking-wider">
-                  Client Approval Decision
-                </span>
-                <span className="text-xs text-slate-600 font-medium">
-                  Reviewing deliverable for client account: <strong>{previewingAsset.item.clientName}</strong>
-                </span>
+            {previewingAsset.itemId && (
+              <div className="p-4 border-t border-slate-200 bg-slate-50 px-6 flex flex-col sm:flex-row justify-between items-center gap-4 shrink-0">
+                <div className="text-center sm:text-left">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block tracking-wider">
+                    Client Approval Decision
+                  </span>
+                  <span className="text-xs text-slate-600 font-medium">
+                    Reviewing deliverable for client account: <strong>{previewingAsset.clientName}</strong>
+                  </span>
+                </div>
+                <div className="flex gap-2.5">
+                  <button
+                    onClick={() => handleApproveWorkflow('In Progress')}
+                    className="px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-100 rounded-xl text-xs font-bold uppercase tracking-wider transition"
+                  >
+                    Reject & Re-Edit
+                  </button>
+                  <button
+                    onClick={() => handleApproveWorkflow('Scheduled')}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-md shadow-indigo-600/10"
+                  >
+                    Approve & Schedule
+                  </button>
+                  <button
+                    onClick={() => handleApproveWorkflow('Completed')}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-md shadow-emerald-600/10"
+                  >
+                    Approve & Complete
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-2.5">
-                <button
-                  onClick={() => handleApproveWorkflow('In Progress')}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-100 rounded-xl text-xs font-bold uppercase tracking-wider transition"
+            )}
+
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Add Asset (Attachment) */}
+      {addingAttachmentId && (
+        <div className="fixed inset-0 z-50 bg-slate-905/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleAddAttachment(addingAttachmentId);
+            }}
+            className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-sm overflow-hidden animate-zoom-in"
+          >
+            <div className="bg-slate-900 text-white p-4 flex justify-between items-center">
+              <h3 className="font-bold text-sm">Add New Content Asset</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setAddingAttachmentId(null);
+                  setNewAttName('');
+                  setNewAttUrl('');
+                  setSelectedFile(null);
+                }}
+                className="text-slate-400 hover:text-white transition font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="p-5 space-y-4 text-slate-800">
+              {/* Field 1: Asset Name */}
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Asset Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. SEO Script Draft v2"
+                  value={newAttName}
+                  onChange={(e) => setNewAttName(e.target.value)}
+                  className="w-full border border-slate-200 rounded-lg p-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 text-slate-800"
+                />
+              </div>
+
+              {/* Field 2: Asset Type */}
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Asset Type</label>
+                <select
+                  value={newAttType}
+                  onChange={(e) => {
+                    setNewAttType(e.target.value as any);
+                    setSelectedFile(null);
+                  }}
+                  className="w-full border border-slate-200 rounded-lg p-2.5 text-xs bg-slate-50 cursor-pointer focus:outline-none text-slate-800"
                 >
-                  Reject & Re-Edit
-                </button>
+                  <option value="Link">🔗 Link</option>
+                  <option value="Document">📄 Doc</option>
+                  <option value="Image">🖼 Image</option>
+                  <option value="Video">🎥 Video</option>
+                  <option value="Text">✍ Text</option>
+                </select>
+              </div>
+
+              {/* Field 3: File Input (shown only for files) */}
+              {(newAttType === 'Video' || newAttType === 'Image' || newAttType === 'Document') && (
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                    Upload Local File
+                  </label>
+                  <input
+                    type="file"
+                    accept={
+                      newAttType === 'Video' ? 'video/*' :
+                      newAttType === 'Image' ? 'image/*' :
+                      newAttType === 'Document' ? '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,text/*' :
+                      '*'
+                    }
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setSelectedFile(file);
+                        if (!newAttName.trim()) {
+                          setNewAttName(file.name);
+                        }
+                      }
+                    }}
+                    className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer bg-slate-50 border border-slate-200 rounded-lg p-1.5 focus:outline-none"
+                  />
+                  {selectedFile && (
+                    <p className="text-[10px] text-emerald-600 font-medium mt-1">
+                      ✓ Selected: {selectedFile.name} ({(selectedFile.size / (1024 * 1024)).toFixed(2)} MB)
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Field 4: Resource URL / Text Details */}
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                  {selectedFile ? 'Resource URL / Text Details (Optional)' : 'Resource URL / Text Details'}
+                </label>
+                <input
+                  type="text"
+                  required={!selectedFile}
+                  placeholder={
+                    newAttType === 'Text' ? 'Enter text content details here...' :
+                    newAttType === 'Link' ? 'https://example.com/link' :
+                    'https://drive.google.com/... or text content'
+                  }
+                  value={newAttUrl}
+                  onChange={(e) => setNewAttUrl(e.target.value)}
+                  className="w-full border border-slate-200 rounded-lg p-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 font-mono text-slate-800"
+                />
+              </div>
+
+              {/* Field 5: Submit Button at the bottom */}
+              <div className="pt-2">
                 <button
-                  onClick={() => handleApproveWorkflow('Scheduled')}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-md shadow-indigo-600/10"
+                  type="submit"
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold uppercase tracking-wider transition shadow-md shadow-blue-600/10"
                 >
-                  Approve & Schedule
-                </button>
-                <button
-                  onClick={() => handleApproveWorkflow('Completed')}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-md shadow-emerald-600/10"
-                >
-                  Approve & Complete
+                  Add Asset
                 </button>
               </div>
             </div>
+          </form>
+        </div>
+      )}
 
-          </div>
+      {/* MODAL: Set Approval Asset */}
+      {addingApprovalId && (
+        <div className="fixed inset-0 z-50 bg-slate-905/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleAddApprovalAsset(addingApprovalId);
+            }}
+            className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-sm overflow-hidden animate-zoom-in"
+          >
+            <div className="bg-slate-900 text-white p-4 flex justify-between items-center">
+              <h3 className="font-bold text-sm">Set Approval Deliverable</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setAddingApprovalId(null);
+                  setNewAppTitle('');
+                  setNewAppUrl('');
+                  setSelectedApprovalFile(null);
+                }}
+                className="text-slate-400 hover:text-white transition font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="p-5 space-y-4 text-slate-800">
+              {/* Field 1: Asset Title */}
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Asset Title</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Q2 SEO Breakdown Final.mp4"
+                  value={newAppTitle}
+                  onChange={(e) => setNewAppTitle(e.target.value)}
+                  className="w-full border border-slate-200 rounded-lg p-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 text-slate-800"
+                />
+              </div>
+
+              {/* Field 2: Asset Type */}
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Asset Type</label>
+                <select
+                  value={newAppType}
+                  onChange={(e) => {
+                    setNewAppType(e.target.value as any);
+                    setSelectedApprovalFile(null);
+                  }}
+                  className="w-full border border-slate-200 rounded-lg p-2.5 text-xs bg-slate-50 cursor-pointer focus:outline-none text-slate-800"
+                >
+                  <option value="Graphic">🖼 Graphic</option>
+                  <option value="Video">🎥 Video</option>
+                  <option value="PDF">📄 PDF</option>
+                </select>
+              </div>
+
+              {/* Field 3: File Input (Optional) */}
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                  Upload Local File
+                </label>
+                <input
+                  type="file"
+                  accept={
+                    newAppType === 'Video' ? 'video/*' :
+                    newAppType === 'Graphic' ? 'image/*' :
+                    'application/pdf'
+                  }
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setSelectedApprovalFile(file);
+                      if (!newAppTitle.trim()) {
+                        setNewAppTitle(file.name);
+                      }
+                    }
+                  }}
+                  className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer bg-slate-50 border border-slate-200 rounded-lg p-1.5 focus:outline-none"
+                />
+                {selectedApprovalFile && (
+                  <p className="text-[10px] text-emerald-600 font-medium mt-1">
+                    ✓ Selected: {selectedApprovalFile.name} ({(selectedApprovalFile.size / (1024 * 1024)).toFixed(2)} MB)
+                  </p>
+                )}
+              </div>
+
+              {/* Field 4: Resource URL Input (Optional fallback) */}
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                  {selectedApprovalFile ? 'Resource URL (Optional)' : 'Resource URL (Optional - defaults to sample asset)'}
+                </label>
+                <input
+                  type="text"
+                  placeholder="https://example.com/asset.mp4"
+                  value={newAppUrl}
+                  onChange={(e) => setNewAppUrl(e.target.value)}
+                  className="w-full border border-slate-200 rounded-lg p-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 font-mono text-slate-800"
+                />
+              </div>
+
+              {/* Field 5: Submit Button */}
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold uppercase tracking-wider transition shadow-md shadow-indigo-600/10"
+                >
+                  Set Approval Item
+                </button>
+              </div>
+            </div>
+          </form>
         </div>
       )}
     </div>
